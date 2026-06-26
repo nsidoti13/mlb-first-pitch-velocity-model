@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 .DS_Store
+mlb_pitch_velo_assessment.csv
