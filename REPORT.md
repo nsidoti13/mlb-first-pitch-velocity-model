@@ -21,6 +21,39 @@ chronologically, training on 2021 and testing on 2022 to emulate true
 forecasting. I benchmarked a logistic regression and gradient-boosted trees
 against two baselines (majority class, and each pitcher's prior over-rate).
 
+## Prompt Engineering
+
+Once I had the methodology framework in mind, I used Claude Opus 4.8 as a coding
+collaborator to implement it efficiently, while keeping the analytical decisions
+my own. My prompting strategy followed a few deliberate principles:
+
+- **Explore before building.** Rather than asking for a model immediately, I first
+  had the assistant inspect the dataset (column names, season coverage, base rate,
+  how to identify starters) so that every downstream decision was grounded in the
+  actual data rather than assumptions.
+- **Lead with the approach, not the code.** I described the task and asked *"how
+  should I approach it"* first, which surfaced the key risks (data leakage, the
+  79% base rate, the small 60-pitcher universe) before any code was written. This
+  kept the implementation aligned with sound methodology instead of jumping
+  straight to a model.
+- **Constrain for correctness.** I steered the implementation toward leakage-safe
+  features (prior-games-only, date-ordered shifts), a time-based 2021→2022 split,
+  and explicit baselines, so the resulting metrics would be trustworthy rather
+  than inflated.
+- **Iterate on results.** When the first run produced a poorly calibrated logistic
+  model, I had the assistant diagnose and fix the cause (an inappropriate
+  `class_weight="balanced"` setting) and re-evaluate, rather than accepting the
+  initial output.
+- **Verify, don't trust blindly.** Each stage was run end-to-end and the outputs
+  were checked against expectations — most importantly confirming that no model
+  scored a suspiciously high AUC, which served as a sanity check that the pipeline
+  was leakage-free.
+
+The net effect was that prompt engineering accelerated implementation and
+boilerplate (data wrangling, scikit-learn pipelines, plotting) while the
+modeling judgment — framing, leakage control, evaluation design, and
+interpretation — remained driven by me.
+
 ## Results (2022 test set)
 
 | Model | AUC | Log loss | Brier | Accuracy |
